@@ -1,0 +1,36 @@
+nand: omap2: disable NAND sequential cached (continuous) read
+
+On AM335x the continuous-read path (NAND cmd 0x31 streaming), enabled in
+6.x when the chip advertises supports_read_cache, is incompatible with the
+GPMC prefetch engine. During UBI mount, reading a full LEB via the
+continuous-read helper aborts mid-transfer with -110 (ETIMEDOUT); the
+underlying flash is fine (direct dd of the same PEB reads cleanly).
+
+Kernel 5.10 has no continuous-read feature and never exhibited this.
+
+Clear chip->parameters.supports_read_cache in omap_nand_attach_chip (which
+runs before nand_scan_tail's rawnand_check_cont_read_support), so
+supported_op.cont_read is never set. This is the legal way to disable it;
+writing supported_op directly would trip WARN_ON_ONCE.
+
+Depends-on: 0001-nand-omap2-elm-eprobe-defer.patch (same file, apply first)
+
+diff --git a/drivers/mtd/nand/raw/omap2.c b/drivers/mtd/nand/raw/omap2.c
+--- a/drivers/mtd/nand/raw/omap2.c
++++ b/drivers/mtd/nand/raw/omap2.c
+@@ -1847,6 +1847,15 @@
+ 	dma_cap_mask_t mask;
+ 	int err;
+ 
++	/* Disable NAND sequential cached (continuous) read. On AM335x the
++	 * cont-read 0x31 streaming path is incompatible with the GPMC prefetch
++	 * engine and causes sporadic -110 mid-LEB during UBI mount. Cleared here
++	 * (attach_chip runs before nand_scan_tail rawnand_check_cont_read_support)
++	 * so supported_op.cont_read is never set - legal, no WARN_ON_ONCE.
++	 * 5.10 had no continuous read; this restores that behaviour.
++	 */
++	chip->parameters.supports_read_cache = false;
++
+ 	if (chip->bbt_options & NAND_BBT_USE_FLASH)
+ 		chip->bbt_options |= NAND_BBT_NO_OOB;
+ 	else

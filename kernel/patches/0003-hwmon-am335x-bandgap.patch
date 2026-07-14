@@ -1,0 +1,164 @@
+diff --git a/drivers/hwmon/Kconfig b/drivers/hwmon/Kconfig
+index 8a427467a..b3bd5d720 100644
+--- a/drivers/hwmon/Kconfig
++++ b/drivers/hwmon/Kconfig
+@@ -257,6 +257,15 @@ config SENSORS_ADT7475
+ 	  This driver can also be built as a module. If so, the module
+ 	  will be called adt7475.
+ 
++config SENSORS_AM335X_BANDGAP
++	tristate "Texas Instruments AM335x SoC temperature sensor"
++	depends on SOC_AM33XX
++	help
++	  If you say yes here you get support for the temperature
++	  sensor found on the AM335x line of SoCs from Texas Instruments.
++	  Note: TI considers this sensor not fully reliable; use for
++	  monitoring only, not safety-critical thermal protection.
++
+ config SENSORS_AS370
+ 	tristate "Synaptics AS370 SoC hardware monitoring driver"
+ 	help
+diff --git a/drivers/hwmon/Makefile b/drivers/hwmon/Makefile
+index 9db2903b6..66fece05a 100644
+--- a/drivers/hwmon/Makefile
++++ b/drivers/hwmon/Makefile
+@@ -45,6 +45,7 @@ obj-$(CONFIG_SENSORS_ADT7411)	+= adt7411.o
+ obj-$(CONFIG_SENSORS_ADT7462)	+= adt7462.o
+ obj-$(CONFIG_SENSORS_ADT7470)	+= adt7470.o
+ obj-$(CONFIG_SENSORS_ADT7475)	+= adt7475.o
++obj-$(CONFIG_SENSORS_AM335X_BANDGAP) += am335x-bandgap.o
+ obj-$(CONFIG_SENSORS_AMD_ENERGY) += amd_energy.o
+ obj-$(CONFIG_SENSORS_APPLESMC)	+= applesmc.o
+ obj-$(CONFIG_SENSORS_ARM_SCMI)	+= scmi-hwmon.o
+diff --git a/drivers/hwmon/am335x-bandgap.c b/drivers/hwmon/am335x-bandgap.c
+new file mode 100644
+index 000000000..6fe551d01
+--- /dev/null
++++ b/drivers/hwmon/am335x-bandgap.c
+@@ -0,0 +1,126 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * AM335x bandgap temperature sensor driver
++ *
++ * Original author: Jan Luebbe <j.luebbe@pengutronix.de> (2013)
++ * Adapted for kernel 5.10 API (L3+ NTP control board).
++ *
++ * NOTE: TI considers the AM335x bandgap sensor not fully reliable and never
++ * mainlined it. Use for monitoring/trend observation, not for safety-critical
++ * thermal protection.
++ */
++
++#include <linux/hwmon.h>
++#include <linux/hwmon-sysfs.h>
++#include <linux/err.h>
++#include <linux/io.h>
++#include <linux/delay.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/slab.h>
++#include <linux/sysfs.h>
++
++#define DRV_NAME	"am335x_bandgap"
++
++#define BANDGAP_CTRL			0x0
++#define BANDGAP_CTRL_DTEMP_MASK		0x0000FF00
++#define BANDGAP_CTRL_DTEMP_OFF		8
++#define BANDGAP_CTRL_BGROFF		BIT(6)
++#define BANDGAP_CTRL_SOC		BIT(4)
++#define BANDGAP_CTRL_CLRZ		BIT(3) /* 0 = clear */
++#define BANDGAP_CTRL_CONTCONV		BIT(2)
++#define BANDGAP_CTRL_ECOZ		BIT(1)
++#define BANDGAP_CTRL_TSHUT		BIT(0)
++
++#define BANDGAP_TRIM			0x4
++
++struct am335x_bandgap {
++    void __iomem *regs;
++    struct device *hwmon_dev;
++};
++
++static ssize_t temp1_input_show(struct device *dev,
++		struct device_attribute *devattr, char *buf)
++{
++    struct am335x_bandgap *data = dev_get_drvdata(dev);
++    u32 val, temp;
++
++    /* read measurement */
++    val = readl(data->regs + BANDGAP_CTRL);
++
++    /* DTEMP field holds the temperature in degrees Celsius */
++    val = (val & BANDGAP_CTRL_DTEMP_MASK) >> BANDGAP_CTRL_DTEMP_OFF;
++    temp = val * 1000; /* hwmon expects millidegrees */
++
++    return sprintf(buf, "%d\n", temp);
++}
++
++static SENSOR_DEVICE_ATTR_RO(temp1_input, temp1_input, 0);
++
++static struct attribute *am335x_bandgap_attrs[] = {
++    &sensor_dev_attr_temp1_input.dev_attr.attr,
++    NULL
++};
++ATTRIBUTE_GROUPS(am335x_bandgap);
++
++static int am335x_bandgap_probe(struct platform_device *pdev)
++{
++    struct am335x_bandgap *data;
++
++    data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
++    if (!data)
++	return -ENOMEM;
++
++    data->regs = devm_platform_ioremap_resource(pdev, 0);
++    if (IS_ERR(data->regs))
++	return PTR_ERR(data->regs);
++
++    platform_set_drvdata(pdev, data);
++
++    /* enable HW sensor: SOC + CLRZ + continuous conversion */
++    writel(BANDGAP_CTRL_SOC | BANDGAP_CTRL_CLRZ | BANDGAP_CTRL_CONTCONV,
++           data->regs + BANDGAP_CTRL);
++
++    data->hwmon_dev = devm_hwmon_device_register_with_groups(&pdev->dev,
++			DRV_NAME, data,
++			am335x_bandgap_groups);
++    if (IS_ERR(data->hwmon_dev)) {
++	/* disable sensor on failure */
++	writel(0x0, data->regs + BANDGAP_CTRL);
++	return PTR_ERR(data->hwmon_dev);
++    }
++
++    return 0;
++}
++
++static int am335x_bandgap_remove(struct platform_device *pdev)
++{
++    struct am335x_bandgap *data = platform_get_drvdata(pdev);
++
++    /* disable HW sensor */
++    writel(0x0, data->regs + BANDGAP_CTRL);
++
++    return 0;
++}
++
++static const struct of_device_id am335x_bandgap_match[] = {
++    { .compatible = "ti,am335x-bandgap" },
++    { },
++};
++MODULE_DEVICE_TABLE(of, am335x_bandgap_match);
++
++static struct platform_driver am335x_bandgap_driver = {
++    .driver = {
++	.name = DRV_NAME,
++	.of_match_table = am335x_bandgap_match,
++    },
++    .probe	= am335x_bandgap_probe,
++    .remove	= am335x_bandgap_remove,
++};
++
++module_platform_driver(am335x_bandgap_driver);
++
++MODULE_AUTHOR("Jan Luebbe <j.luebbe@pengutronix.de>");
++MODULE_DESCRIPTION("AM335x temperature sensor driver");
++MODULE_LICENSE("GPL");

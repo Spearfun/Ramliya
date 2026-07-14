@@ -1,0 +1,21 @@
+diff --git a/drivers/pps/clients/pps-gpio.c b/drivers/pps/clients/pps-gpio.c
+index e0de1df2e..aaccddbbe 100644
+--- a/drivers/pps/clients/pps-gpio.c
++++ b/drivers/pps/clients/pps-gpio.c
+@@ -186,14 +186,14 @@ static int pps_gpio_probe(struct platform_device *pdev)
+ 	} else {
+ 		ret = pps_gpio_setup(pdev);
+ 		if (ret)
+-			return -EINVAL;
++			return ret;
+ 	}
+ 
+ 	/* IRQ setup */
+ 	ret = gpiod_to_irq(data->gpio_pin);
+ 	if (ret < 0) {
+ 		dev_err(&pdev->dev, "failed to map GPIO to IRQ: %d\n", ret);
+-		return -EINVAL;
++		return ret;
+ 	}
+ 	data->irq = ret;
+ 

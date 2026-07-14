@@ -1,0 +1,2 @@
+# Optional chronyd args appended via $CHRONYD_ARGS
+# CHRONYD_ARGS=""

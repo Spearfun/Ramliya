@@ -1,0 +1,5 @@
+# /etc/profile: system-wide login shell config
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PS1='\h:\w\$ '
+PS2='> '
+export PATH PS1 PS2

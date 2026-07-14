@@ -1,0 +1,13 @@
+diff --git a/drivers/bus/ti-sysc.c b/drivers/bus/ti-sysc.c
+index 4ee20be76..b759e5583 100644
+--- a/drivers/bus/ti-sysc.c
++++ b/drivers/bus/ti-sysc.c
+@@ -3212,7 +3212,7 @@ static int sysc_probe(struct platform_device *pdev)
+ 		return error;
+ 
+ 	error = sysc_check_active_timer(ddata);
+-	if (error == -ENXIO)
++	if (error == -ENXIO || error == -EBUSY)
+ 		ddata->reserved = true;
+ 	else if (error)
+ 		return error;

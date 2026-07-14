@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ramliya · status</title>
+<style>
+  :root{
+    --bg:#14171a; --panel:#1b1f23; --rule:#2a3036;
+    --fg:#d6dbe0; --dim:#7d8892; --eyebrow:#5aa6a0;
+    --ok:#46b17a; --warn:#d19a3a; --bad:#d15a4e;
+    --mono:ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
+       font-size:14px;line-height:1.45;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+
+  /* banner */
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+         border-bottom:1px solid var(--rule);padding-bottom:12px;margin-bottom:16px}
+  .brand{font-size:22px;font-weight:700;letter-spacing:.5px}
+  .brand .ver{font-family:var(--mono);font-weight:400;font-size:12px;
+              color:var(--dim);letter-spacing:.5px;margin-left:9px}
+  .tag{margin-left:auto;color:var(--eyebrow);font-family:var(--mono);
+       font-size:12px;letter-spacing:2px;text-transform:uppercase}
+
+  /* front-panel indicator row (mirrors physical LED language, section 14.8) */
+  .panel{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+  .led{display:flex;align-items:center;gap:9px;background:var(--panel);
+       border:1px solid var(--rule);border-radius:2px;padding:9px 13px;min-width:150px}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--dim);flex:none;
+       box-shadow:0 0 0 0 transparent}
+  .led .name{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--dim)}
+  .led .val{font-family:var(--mono);font-size:13px;margin-left:auto}
+  .dot.ok{background:var(--ok);box-shadow:0 0 7px 0 var(--ok)}
+  .dot.warn{background:var(--warn);box-shadow:0 0 7px 0 var(--warn)}
+  .dot.bad{background:var(--bad);box-shadow:0 0 7px 0 var(--bad)}
+  .dot.live{animation:pulse 1s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(70,177,122,.6)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @media (prefers-reduced-motion:reduce){.dot.live{animation:none}}
+
+  /* sections */
+  section{margin-bottom:22px}
+  h2{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:2px;
+     text-transform:uppercase;color:var(--eyebrow);margin:0 0 8px;
+     border-bottom:1px solid var(--rule);padding-bottom:5px}
+  .rows{display:grid;grid-template-columns:minmax(150px,auto) 1fr}
+  .rows > div{padding:3px 0;border-bottom:1px solid #22272c}
+  .k{color:var(--dim)}
+  .v{font-family:var(--mono);text-align:right}
+  .v.ok{color:var(--ok)} .v.warn{color:var(--warn)} .v.bad{color:var(--bad)}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px}
+  th{color:var(--dim);font-weight:600;text-align:right;padding:4px 6px;
+     border-bottom:1px solid var(--rule);font-size:11px;letter-spacing:.5px}
+  th:first-child,td:first-child{text-align:left}
+  td{padding:4px 6px;border-bottom:1px solid #22272c;text-align:right}
+
+  /* controls */
+  .bar{display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+  button{font-family:var(--mono);font-size:13px;color:var(--fg);background:var(--panel);
+         border:1px solid var(--rule);border-radius:2px;padding:8px 18px;cursor:pointer}
+  button:hover{border-color:var(--eyebrow)}
+  button:focus-visible{outline:2px solid var(--eyebrow);outline-offset:2px}
+  label.auto{display:flex;align-items:center;gap:7px;color:var(--dim);
+             font-family:var(--mono);font-size:12px;cursor:pointer}
+  .stamp{margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:12px}
+  .empty{color:var(--dim);font-family:var(--mono);font-size:12px;padding:2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="brand">Ramliya<span class="ver" id="fwVer">—</span></span>
+    <span class="tag">Stratum-1</span>
+  </header>
+
+  <div class="bar">
+    <button id="refresh" type="button">Refresh</button>
+    <label class="auto"><input type="checkbox" id="auto"> auto 30&nbsp;s</label>
+    <span class="stamp" id="stamp">idle</span>
+  </div>
+
+  <div class="panel">
+    <div class="led"><span class="dot" id="sysDot"></span><span class="name">SYS</span><span class="val" id="sysVal">—</span></div>
+    <div class="led"><span class="dot" id="ppsDot"></span><span class="name">PPS</span><span class="val" id="ppsVal">—</span></div>
+  </div>
+
+  <section>
+    <h2>Time / GPS</h2>
+    <div class="rows" id="time"></div>
+  </section>
+
+  <section>
+    <h2>PPS capture — counters</h2>
+    <div class="rows" id="pps"></div>
+  </section>
+
+  <section id="ptpSec">
+    <h2>PTP grandmaster</h2>
+    <div class="rows" id="ptp"></div>
+  </section>
+
+  <section>
+    <h2>Sources</h2>
+    <table id="sources"><thead><tr>
+      <th>Source</th><th>Str</th><th>Poll</th><th>Reach</th><th>LastRx</th><th>State</th>
+    </tr></thead><tbody></tbody></table>
+  </section>
+
+  <section>
+    <h2>Source statistics</h2>
+    <table id="sourcestats"><thead><tr>
+      <th>Source</th><th>NP</th><th>Span</th><th>Freq</th><th>Skew</th><th>Offset</th><th>Std&nbsp;Dev</th>
+    </tr></thead><tbody></tbody></table>
+  </section>
+
+  <section>
+    <h2>System</h2>
+    <div class="rows" id="sys"></div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+var prevCount = null;          // used to detect a live PPS by count increment
+var timer = null;
+
+function el(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+// one "key : value" row with an optional state class (ok/warn/bad)
+function row(k,v,cls){
+  return '<div class="k">'+esc(k)+'</div><div class="v'+(cls?' '+cls:'')+'">'+esc(v)+'</div>';
+}
+
+function num(x){ var n=parseFloat(x); return isNaN(n)?null:n; }
+
+function fmtUptime(s){
+  s=Math.floor(num(s)||0);
+  var d=Math.floor(s/86400); s%=86400;
+  var h=Math.floor(s/3600);  s%=3600;
+  var m=Math.floor(s/60);
+  return (d?d+"d ":"")+h+"h "+m+"m";
+}
+function fmtMB(kb){ var n=num(kb); return n==null?"—":(Math.round(n/1024))+" MB"; }
+function fmtTemp(md){ var n=num(md); return n==null?"—":(n/1000).toFixed(1)+" °C"; }
+
+function stratumCls(s){ var n=num(s); if(n===1)return"ok"; if(n>=2&&n<=15)return"warn"; return"bad"; }
+function tempCls(md){ var n=num(md); if(n==null)return""; n/=1000; if(n>=85)return"bad"; if(n>=75)return"warn"; return"ok"; }
+function netCls(s){ return s==="up"?"ok":"bad"; }
+function leapCls(s){ return /normal/i.test(s||"")?"ok":"warn"; }
+
+function render(d){
+  // banner — version tag next to the wordmark (strip redundant project name)
+  var fw = d.fw || {};
+  var ver = (fw.version_line||"").replace(/^Ramliya\s+/i,"");
+  if(!ver) ver = fw.driver ? "v"+fw.driver : "";
+  el("fwVer").textContent = ver || "—";
+
+  // --- front panel: SYS ---
+  // system is alive (the page answered) => green; red is reserved for a panic monitor
+  el("sysDot").className = "dot ok";
+  el("sysVal").textContent = "OK";
+
+  // --- front panel: PPS ---
+  var c = d.pps ? num(d.pps.count) : null;
+  var str = d.chrony ? num(d.chrony.stratum) : null;
+  var live = (prevCount!=null && c!=null && c>prevCount);
+  var ppsCls, ppsTxt;
+  if(live && str===1){ ppsCls="ok live"; ppsTxt="lock"; }
+  else if(str===1){ ppsCls="ok"; ppsTxt="lock"; }
+  else if(prevCount==null){ ppsCls="warn"; ppsTxt="…"; }   // first sample — not yet known
+  else { ppsCls="bad"; ppsTxt="no fix"; }
+  el("ppsDot").className = "dot "+ppsCls;
+  el("ppsVal").textContent = ppsTxt;
+  prevCount = c;
+
+  // --- Time / GPS ---
+  var ch = d.chrony||{};
+  el("time").innerHTML =
+      row("Reference ID", ch.refid||"—")
+    + row("Stratum", ch.stratum||"—", stratumCls(ch.stratum))
+    + row("System time", ch.system_time||"—")
+    + row("Last offset", ch.last_offset||"—")
+    + row("RMS offset", ch.rms_offset||"—")
+    + row("Frequency", ch.frequency||"—")
+    + row("Skew", ch.skew||"—")
+    + row("Root delay", ch.root_delay||"—")
+    + row("Root dispersion", ch.root_dispersion||"—")
+    + row("Update interval", ch.update_interval||"—")
+    + row("Leap status", ch.leap||"—", leapCls(ch.leap));
+
+  // --- PPS counters ---
+  var p = d.pps||{};
+  var spurCls = (num(p.spurious)>0)?"warn":"ok";
+  el("pps").innerHTML =
+      row("Count (pulses)", p.count==null?"—":p.count)
+    + row("Spurious", p.spurious==null?"—":p.spurious, spurCls)
+    + row("Last delta (latency)", p.last_delta_ns==null?"—":p.last_delta_ns+" ns")
+    + row("Timer clock (fclk)", p.rate==null?"—":(p.rate/1e6)+" MHz")
+    + row("Capture resolution", p.rate==null?"—":"~"+(1e9/p.rate).toFixed(2)+" ns/tick")
+    + row("IRQ", (p.irq||"—")+(p.irq_count==null?"":" · "+p.irq_count));
+
+  // --- PTP ---
+  var pt = d.ptp||{};
+  if(pt.available){
+    el("ptpSec").style.display="";
+    var master = /master/i.test(pt.port_state||"");
+    el("ptp").innerHTML =
+        row("Port state", pt.port_state||"—", master?"ok":"warn")
+      + row("Grandmaster", master?"yes (assuming GM role)":"no", master?"ok":"warn")
+      + row("clockClass", pt.clock_class||"—")
+      + row("PHC ↔ system", pt.phc_cmp||"—");
+  } else {
+    el("ptpSec").style.display="none";
+  }
+
+  // --- sources ---
+  var tb = el("sources").tBodies[0]; tb.innerHTML="";
+  var src = d.sources||[];
+  if(!src.length){ tb.innerHTML='<tr><td colspan="6" class="empty">no data</td></tr>'; }
+  src.forEach(function(s){
+    var reached = (s.reach==="377")?"ok":(num(s.reach)>0?"warn":"bad");
+    var tr=document.createElement("tr");
+    tr.innerHTML='<td>'+esc(s.ms)+' '+esc(s.name)+'</td><td>'+esc(s.stratum)+'</td><td>'+esc(s.poll)
+      +'</td><td class="v '+reached+'">'+esc(s.reach)+'</td><td>'+esc(s.lastrx)+'</td><td>'+esc(s.ms)+'</td>';
+    tb.appendChild(tr);
+  });
+
+  // --- sourcestats ---
+  var tb2 = el("sourcestats").tBodies[0]; tb2.innerHTML="";
+  var ss = d.sourcestats||[];
+  if(!ss.length){ tb2.innerHTML='<tr><td colspan="7" class="empty">no data</td></tr>'; }
+  ss.forEach(function(s){
+    var tr=document.createElement("tr");
+    tr.innerHTML='<td>'+esc(s.name)+'</td><td>'+esc(s.np)+'</td><td>'+esc(s.span)+'</td><td>'+esc(s.freq)
+      +'</td><td>'+esc(s.skew)+'</td><td>'+esc(s.offset)+'</td><td>'+esc(s.stddev)+'</td>';
+    tb2.appendChild(tr);
+  });
+
+  // --- system ---
+  var sy = d.sys||{};
+  el("sys").innerHTML =
+      row("Uptime", fmtUptime(sy.uptime_s))
+    + row("Load average", sy.load||"—")
+    + row("Free RAM", fmtMB(sy.mem_avail_kb!=null?sy.mem_avail_kb:sy.mem_free_kb)
+        + (sy.mem_total_kb!=null?" / "+fmtMB(sy.mem_total_kb):""))
+    + row("Kernel", (d.fw&&d.fw.kernel_line)||"—")
+    + row("CPU temperature", fmtTemp(sy.temp_mdeg), tempCls(sy.temp_mdeg))
+    + row("Network ("+(sy.net_iface||"eth0")+")",
+        (sy.net_state||"—")+(sy.net_speed?" · "+sy.net_speed+" Mbps":"")+(sy.ip?" · "+sy.ip:""),
+        netCls(sy.net_state));
+
+  el("stamp").textContent = "updated " + new Date().toLocaleTimeString();
+}
+
+function load(){
+  el("stamp").textContent = "loading…";
+  fetch("status.cgi", {cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(render)
+    .catch(function(e){ el("stamp").textContent = "error: "+e.message; });
+}
+
+function setAuto(on){
+  if(timer){ clearInterval(timer); timer=null; }
+  if(on){ timer=setInterval(load, 30000); }
+}
+
+el("refresh").addEventListener("click", load);
+el("auto").addEventListener("change", function(){ setAuto(this.checked); });
+load();
+</script>
+</body>
+</html>

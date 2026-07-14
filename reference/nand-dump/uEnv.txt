@@ -1,0 +1,12 @@
+bootfile=uImage.bin
+fdtfile=am335x-boneblack-bitmainer.dtb
+initramfsfile=initramfs.bin.SD
+mmcpart=1
+optargs=quiet
+initramfsaddr=0x81000000
+initramfsargs=setenv bootargs console=${console} ${optargs} init=/sbin/init
+loadfdt=load mmc ${mmcdev}:${mmcpart} ${fdtaddr} ${fdtfile}
+loadinitramfs=load mmc ${mmcdev}:${mmcpart} ${initramfsaddr} ${initramfsfile}
+loaduimage=load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bootfile}
+bootinitramfs=bootm ${loadaddr} ${initramfsaddr} ${fdtaddr}
+uenvcmd=run loadfdt loadinitramfs loaduimage initramfsargs bootinitramfs

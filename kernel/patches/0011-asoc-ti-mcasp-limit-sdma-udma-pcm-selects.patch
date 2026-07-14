@@ -1,0 +1,15 @@
+diff --git a/sound/soc/ti/Kconfig b/sound/soc/ti/Kconfig
+index 9775393d4..81a19cde7 100644
+--- a/sound/soc/ti/Kconfig
++++ b/sound/soc/ti/Kconfig
+@@ -27,8 +27,8 @@ config SND_SOC_DAVINCI_ASP
+ config SND_SOC_DAVINCI_MCASP
+ 	tristate "Multichannel Audio Serial Port (McASP) support"
+ 	select SND_SOC_TI_EDMA_PCM
+-	select SND_SOC_TI_SDMA_PCM
+-	select SND_SOC_TI_UDMA_PCM
++	select SND_SOC_TI_SDMA_PCM if SOC_DRA7XX
++	select SND_SOC_TI_UDMA_PCM if ARCH_K3
+ 	help
+ 	  Say Y or M here if you want to have support for McASP IP found in
+ 	  various Texas Instruments SoCs like:

@@ -1,0 +1,13 @@
+diff --git a/drivers/net/ethernet/ti/cpts.c b/drivers/net/ethernet/ti/cpts.c
+index f95145187..cad73424b 100644
+--- a/drivers/net/ethernet/ti/cpts.c
++++ b/drivers/net/ethernet/ti/cpts.c
+@@ -430,7 +430,7 @@ static long cpts_overflow_check(struct ptp_clock_info *ptp)
+ 
+ static const struct ptp_clock_info cpts_info = {
+ 	.owner		= THIS_MODULE,
+-	.name		= "CTPS timer",
++	.name		= "CPTS timer",
+ 	.max_adj	= 1000000,
+ 	.n_ext_ts	= 0,
+ 	.n_pins		= 0,

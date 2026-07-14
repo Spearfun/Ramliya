@@ -1,0 +1,126 @@
+diff --git a/drivers/mtd/nand/raw/omap2.c b/drivers/mtd/nand/raw/omap2.c
+index 6d1dd7ef7..623ded499 100644
+--- a/drivers/mtd/nand/raw/omap2.c
++++ b/drivers/mtd/nand/raw/omap2.c
+@@ -1529,30 +1529,41 @@ static int omap_read_page_bch(struct nand_chip *chip, uint8_t *buf,
+  * is_elm_present - checks for presence of ELM module by scanning DT nodes
+  * @omap_nand_info: NAND device structure containing platform data
+  */
+-static bool is_elm_present(struct omap_nand_info *info,
+-			   struct device_node *elm_node)
++static int is_elm_present(struct omap_nand_info *info,
++	      struct device_node *elm_node)
+ {
+-	struct platform_device *pdev;
+-
+-	/* check whether elm-id is passed via DT */
+-	if (!elm_node) {
+-		dev_err(&info->pdev->dev, "ELM devicetree node not found\n");
+-		return false;
+-	}
+-	pdev = of_find_device_by_node(elm_node);
+-	/* check whether ELM device is registered */
+-	if (!pdev) {
+-		dev_err(&info->pdev->dev, "ELM device not found\n");
+-		return false;
+-	}
+-	/* ELM module available, now configure it */
+-	info->elm_dev = &pdev->dev;
+-	return true;
++    struct platform_device *pdev;
++
++    /* check whether elm-id is passed via DT */
++    if (!elm_node) {
++	dev_err(&info->pdev->dev, "ELM devicetree node not found\n");
++	return -ENODEV;
++    }
++
++    pdev = of_find_device_by_node(elm_node);
++    /* check whether ELM device is registered */
++    if (!pdev) {
++	dev_err(&info->pdev->dev, "ELM device not found\n");
++	return -ENODEV;
++    }
++
++    /* check whether ELM driver has bound this device yet */
++    if (!platform_get_drvdata(pdev)) {
++	dev_dbg(&info->pdev->dev,
++	    "ELM not yet probed, deferring NAND probe\n");
++	put_device(&pdev->dev);
++	return -EPROBE_DEFER;
++    }
++
++    /* ELM module available, now configure it */
++    info->elm_dev = &pdev->dev;
++    return 0;
+ }
+ 
+-static bool omap2_nand_ecc_check(struct omap_nand_info *info)
++static int omap2_nand_ecc_check(struct omap_nand_info *info)
+ {
+ 	bool ecc_needs_bch, ecc_needs_omap_bch, ecc_needs_elm;
++	int ret;
+ 
+ 	switch (info->ecc_opt) {
+ 	case OMAP_ECC_BCH4_CODE_HW_DETECTION_SW:
+@@ -1575,22 +1586,27 @@ static bool omap2_nand_ecc_check(struct omap_nand_info *info)
+ 		break;
+ 	}
+ 
+-	if (ecc_needs_bch && !IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_BCH)) {
+-		dev_err(&info->pdev->dev,
+-			"CONFIG_MTD_NAND_ECC_SW_BCH not enabled\n");
+-		return false;
+-	}
+-	if (ecc_needs_omap_bch && !IS_ENABLED(CONFIG_MTD_NAND_OMAP_BCH)) {
++    if (ecc_needs_bch && !IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_BCH)) {
++	dev_err(&info->pdev->dev,
++	    "CONFIG_MTD_NAND_ECC_SW_BCH not enabled\n");
++	return -EINVAL;
++    }
++    if (ecc_needs_omap_bch && !IS_ENABLED(CONFIG_MTD_NAND_OMAP_BCH)) {
++	dev_err(&info->pdev->dev,
++	    "CONFIG_MTD_NAND_OMAP_BCH not enabled\n");
++	return -EINVAL;
++    }
++    if (ecc_needs_elm) {
++	ret = is_elm_present(info, info->elm_of_node);
++	if (ret) {
++	    if (ret != -EPROBE_DEFER)
+ 		dev_err(&info->pdev->dev,
+-			"CONFIG_MTD_NAND_OMAP_BCH not enabled\n");
+-		return false;
+-	}
+-	if (ecc_needs_elm && !is_elm_present(info, info->elm_of_node)) {
+-		dev_err(&info->pdev->dev, "ELM not available\n");
+-		return false;
++		    "ELM not available\n");
++	    return ret;
+ 	}
++    }
+ 
+-	return true;
++    return 0;
+ }
+ 
+ static const char * const nand_xfer_types[] = {
+@@ -1770,6 +1786,7 @@ static int omap_nand_attach_chip(struct nand_chip *chip)
+ 	int min_oobbytes = BADBLOCK_MARKER_LENGTH;
+ 	int oobbytes_per_step;
+ 	dma_cap_mask_t mask;
++	int ret;
+ 	int err;
+ 
+ 	if (chip->bbt_options & NAND_BBT_USE_FLASH)
+@@ -1857,8 +1874,9 @@ static int omap_nand_attach_chip(struct nand_chip *chip)
+ 		return -EINVAL;
+ 	}
+ 
+-	if (!omap2_nand_ecc_check(info))
+-		return -EINVAL;
++		ret = omap2_nand_ecc_check(info);
++		    if (ret)
++		return ret;
+ 
+ 	/*
+ 	 * Bail out earlier to let NAND_ECC_ENGINE_TYPE_SOFT code create its own

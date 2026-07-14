@@ -1,0 +1,16 @@
+diff --git a/arch/arm/mach-omap2/pm.c b/arch/arm/mach-omap2/pm.c
+index da829a90f..cf3e259c9 100644
+--- a/arch/arm/mach-omap2/pm.c
++++ b/arch/arm/mach-omap2/pm.c
+@@ -151,7 +151,10 @@ int __init omap2_common_pm_late_init(void)
+ 	omap3_twl_init();
+ 	omap4_twl_init();
+ 	omap4_cpcap_init();
+-	omap_voltage_late_init();
++	/* AM33xx/AM43xx register no voltage domains (io.c has no
++	 * am33xx_voltagedomains_init) — skip empty-list late init */
++	if (!soc_is_am33xx() && !soc_is_am43xx())
++		omap_voltage_late_init();
+ 
+ 	/* Smartreflex device init */
+ 	omap_devinit_smartreflex();

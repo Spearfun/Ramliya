@@ -1,0 +1,26 @@
+# Disable busybox init applets per br2-ext-finit documentation
+# finit takes over init/shutdown/reboot duties
+# CONFIG_INIT is not set
+# CONFIG_FEATURE_USE_INITTAB is not set
+# CONFIG_HALT is not set
+# CONFIG_POWEROFF is not set
+# CONFIG_REBOOT is not set
+# CONFIG_LINUXRC is not set
+# RAM ring-buffer syslog (syslogd -C + logread), zero NAND wear
+CONFIG_FEATURE_IPC_SYSLOG=y
+CONFIG_FEATURE_IPC_SYSLOG_BUFFER_SIZE=64
+CONFIG_LOGREAD=y
+CONFIG_FEATURE_LOGREAD_REDUCED_LOCKING=y
+
+# --- HTTP status server (read-only web UI) ---
+CONFIG_HTTPD=y
+CONFIG_FEATURE_HTTPD_CGI=y
+CONFIG_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR=y
+# Monolithic kernel: no module utilities
+# CONFIG_INSMOD is not set
+# CONFIG_RMMOD is not set
+# CONFIG_LSMOD is not set
+# CONFIG_MODPROBE is not set
+# CONFIG_DEPMOD is not set
+# CONFIG_MODINFO is not set
+# CONFIG_MODPROBE_SMALL is not set

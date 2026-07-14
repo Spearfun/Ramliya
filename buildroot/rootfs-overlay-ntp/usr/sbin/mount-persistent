@@ -1,0 +1,49 @@
+#!/bin/sh
+# Mount persistent NAND overlay (UBI on mtd9) and overlay /etc.
+# Runs as finit bootstrap task [S], BEFORE runlevel-2 services.
+#
+# Architecture:
+#   lower = /etc from initramfs (image defaults, read-only base)
+#   upper = UBIFS etc-upper     (persistent changes: keys, configs)
+#   work  = UBIFS etc-work      (overlayfs internal)
+#   merged -> /etc              (defaults + persistent changes)
+#
+# First boot: etc-upper empty -> /etc shows pure image defaults;
+#             dropbear -R generates host key -> lands in etc-upper (persistent).
+# Later boots: etc-upper has key/configs -> overlaid on top of image defaults.
+
+MTD_UBI=9
+UBI_VOL=/dev/ubi0_0
+MNT=/mnt/overlay
+
+# 1. Attach UBI if not already attached
+if [ ! -c /dev/ubi0 ]; then
+    ubiattach -m "$MTD_UBI" || { echo "mount-persistent: ubiattach failed"; exit 1; }
+fi
+
+# 2. Wait for volume char device (attach is async)
+i=0
+while [ ! -c "$UBI_VOL" ] && [ "$i" -lt 25 ]; do
+    sleep 0.2
+    i=$((i + 1))
+done
+[ -c "$UBI_VOL" ] || { echo "mount-persistent: $UBI_VOL never appeared"; exit 1; }
+
+# 3. Mount UBIFS overlay volume
+mkdir -p "$MNT"
+if ! mountpoint -q "$MNT"; then
+    mount -t ubifs -o compr=none,noatime,nodiratime "$UBI_VOL" "$MNT" || { echo "mount-persistent: ubifs mount failed"; exit 1; }
+fi
+
+# 4. Prepare overlay dirs (do NOT wipe if they already exist - persistent data!)
+mkdir -p "$MNT/etc-upper" "$MNT/etc-work"
+
+# 5. Overlay /etc: image defaults (lower) + persistent changes (upper)
+if ! mount | grep -q "overlay on /etc "; then
+    mount -t overlay overlay \
+        -o lowerdir=/etc,upperdir="$MNT/etc-upper",workdir="$MNT/etc-work" \
+        /etc || { echo "mount-persistent: /etc overlay failed"; exit 1; }
+fi
+
+echo "mount-persistent: OK (/etc overlaid, persistent on NAND)"
+exit 0

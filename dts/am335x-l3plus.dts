@@ -1,0 +1,342 @@
+/dts-v1/;
+
+#include "am33xx.dtsi"
+#include "am335x-bone-common.dtsi"
+
+/ {
+    model = "TI AM335x Bitmain Antminer L3+ Control Board";
+    compatible = "ti,am335x-bone-black", "ti,am335x-bone", "ti,am33xx";
+
+    memory@80000000 {
+	device_type = "memory";
+	reg = <0x80000000 0x10000000>;	/* 256 MB */
+    };
+
+    chosen {
+	stdout-path = &uart0;
+    };
+};
+
+/* ============ NAND (GPMC + ELM, BCH8 HW ECC) ============ */
+
+&am33xx_pinmux {
+    nand_flash_x8_pins: nand_flash_x8_pins {
+	pinctrl-single,pins = <
+	    0x000 0x30 0x004 0x30 0x008 0x30 0x00c 0x30
+	    0x010 0x30 0x014 0x30 0x018 0x30 0x01c 0x30
+	    0x070 0x30 0x074 0x37 0x07c 0x08 0x090 0x08
+	    0x094 0x08 0x098 0x08 0x09c 0x08
+	>;
+    };
+
+    mcasp0_pins: mcasp0_pins {
+	pinctrl-single,pins = <
+	    0x1ac 0x30 0x19c 0x02 0x194 0x10 0x190 0x00 0x6c 0x07
+	>;
+    };
+
+    uart1_pins: uart1_pins {
+        pinctrl-single,pins = <
+            0x180 0x30    /* P9_26: uart1_rxd | MODE0 | INPUT_PULLUP */
+            0x184 0x00    /* P9_24: uart1_txd | MODE0 | OUTPUT */
+        >;
+    };
+
+    uart2_pins: uart2_pins {
+        pinctrl-single,pins = <
+            0x150 0x31    /* P9_22: uart2_rxd | MODE1 | INPUT_PULLDOWN */
+            0x154 0x01    /* P9_21: uart2_txd | MODE1 | OUTPUT */
+        >;
+    };
+
+	timer7_pins: timer7_pins {
+	pinctrl-single,pins = <
+            0x1B4 0x24    /* P9_41: timer7 | MODE4 | INPUT | PULLDOWN */
+        >;
+    };
+};
+
+&uart0 {
+    status = "okay";
+};
+
+&elm {
+    status = "okay";
+};
+
+&gpmc {
+    status = "okay";
+    pinctrl-names = "default";
+    pinctrl-0 = <&nand_flash_x8_pins>;
+    ranges = <0 0 0x08000000 0x1000000>;	/* CS0: 16MB IO window */
+    #address-cells = <2>;
+    #size-cells = <1>;
+
+    nand@0,0 {
+	compatible = "ti,omap2-nand";
+	reg = <0 0 4>;
+	interrupt-parent = <&gpmc>;
+	interrupts = <0 0>, <1 0>;
+	nand-bus-width = <8>;
+	ti,nand-ecc-opt = "bch8";
+	ti,elm-id = <&elm>;
+
+	gpmc,device-width = <1>;
+	gpmc,sync-clk-ps = <0>;
+	gpmc,cs-on-ns = <0>;
+	gpmc,cs-rd-off-ns = <280>;
+	gpmc,cs-wr-off-ns = <280>;
+	gpmc,adv-on-ns = <50>;
+	gpmc,adv-rd-off-ns = <280>;
+	gpmc,adv-wr-off-ns = <280>;
+	gpmc,we-on-ns = <50>;
+	gpmc,we-off-ns = <200>;
+	gpmc,oe-on-ns = <50>;
+	gpmc,oe-off-ns = <150>;
+	gpmc,access-ns = <200>;
+	gpmc,rd-cycle-ns = <300>;
+	gpmc,wr-cycle-ns = <300>;
+	gpmc,wait-on-read = "true";
+	gpmc,wait-on-write = "true";
+	gpmc,wait-monitoring-ns = <0>;
+	gpmc,bus-turnaround-ns = <0>;
+	gpmc,cycle2cycle-delay-ns = <120>;
+	gpmc,cycle2cycle-samecsen = "true";
+	gpmc,clk-activation-ns = <0>;
+	gpmc,wr-access-ns = <40>;
+	gpmc,wr-data-mux-bus-ns = <0>;
+
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	partitions {
+	    compatible = "fixed-partitions";
+	    #address-cells = <1>;
+	    #size-cells = <1>;
+
+	    partition@0        { label = "spl";         reg = <0x00000000 0x00020000>; };
+	    partition@20000    { label = "spl_backup1"; reg = <0x00020000 0x00020000>; };
+	    partition@40000    { label = "spl_backup2"; reg = <0x00040000 0x00020000>; };
+	    partition@60000    { label = "spl_backup3"; reg = <0x00060000 0x00020000>; };
+	    partition@80000    { label = "u-boot";      reg = <0x00080000 0x001c0000>; };
+	    partition@240000   { label = "bootenv";     reg = <0x00240000 0x00020000>; };
+	    partition@260000   { label = "fdt";         reg = <0x00260000 0x00020000>; };
+	    partition@280000   { label = "kernel";      reg = <0x00280000 0x00580000>; };
+	    partition@800000   { label = "initramfs";   reg = <0x00800000 0x01400000>; };
+	    partition@1c00000  { label = "ubi";         reg = <0x01c00000 0x0e400000>; };
+	};
+    };
+};
+
+/* ============ Отключение отсутствующего железа ============ */
+&usb0 { status = "disabled"; };
+
+&baseboard_eeprom { status = "disabled"; };
+&cape_eeprom0 { status = "disabled"; };
+&cape_eeprom1 { status = "disabled"; };
+&cape_eeprom2 { status = "disabled"; };
+&cape_eeprom3 { status = "disabled"; };
+
+/* ============ User LEDs (4 синих) ============ */
+&{/leds/led2} {
+    label = "l3plus:blue:usr0";
+    linux,default-trigger = "default-on";
+    panic-indicator;
+};
+
+&{/leds/led3} {
+    label = "l3plus:blue:usr1";
+    linux,default-trigger = "none";
+};
+
+&{/leds/led4} {
+    label = "l3plus:blue:usr2";
+    linux,default-trigger = "none";
+};
+
+/* индикация захвата на usr3: */
+&{/leds/led5} {
+    label = "l3plus:blue:usr3";
+    linux,default-trigger = "pps-dmtimer";
+};
+
+/* ============ Audio: McASP I2S → внешний DAC (spdif-dit заглушка) ============ */
+
+&mcasp0 {
+    status = "okay";
+    pinctrl-names = "default";
+    pinctrl-0 = <&mcasp0_pins>;
+    op-mode = <0>;			/* MCASP_IIS_MODE */
+    tdm-slots = <2>;
+    serial-dir = <0 0 1 0>;		/* 4 сериализатора: 3-й = TX */
+    #sound-dai-cells = <0>;
+};
+
+/ {
+    clk_mcasp0_fixed: clk_mcasp0_fixed {
+	#clock-cells = <0>;
+	compatible = "fixed-clock";
+	clock-frequency = <24576000>;
+    };
+
+    clk_mcasp0: clk_mcasp0 {
+	#clock-cells = <0>;
+	compatible = "gpio-gate-clock";
+	clocks = <&clk_mcasp0_fixed>;
+	enable-gpios = <&gpio1 27 0>;	/* gpio1_27 */
+    };
+
+    spdif_dit: dit-codec {
+	compatible = "linux,spdif-dit";
+	#sound-dai-cells = <0>;
+    };
+
+    sound {
+	compatible = "simple-audio-card";
+	simple-audio-card,name = "TI BeagleBone Black";
+	simple-audio-card,format = "i2s";
+	simple-audio-card,bitclock-master = <&sound_cpu>;
+	simple-audio-card,frame-master = <&sound_cpu>;
+
+	sound_cpu: simple-audio-card,cpu {
+	    sound-dai = <&mcasp0>;
+	    clocks = <&clk_mcasp0>;
+	};
+
+	simple-audio-card,codec {
+	    sound-dai = <&spdif_dit>;
+	};
+    };
+};
+
+/ {
+    vbus_phy0: vbus_phy0 {
+	compatible = "regulator-fixed";
+	regulator-name = "vbus_phy0";
+	regulator-min-microvolt = <5000000>;
+	regulator-max-microvolt = <5000000>;
+	regulator-always-on;
+	regulator-boot-on;
+    };
+
+    vbus_phy1: vbus_phy1 {
+	compatible = "regulator-fixed";
+	regulator-name = "vbus_phy1";
+	regulator-min-microvolt = <5000000>;
+	regulator-max-microvolt = <5000000>;
+	regulator-always-on;
+	regulator-boot-on;
+    };
+};
+
+&usb0_phy {
+    vcc-supply = <&ldo4_reg>;
+    vbus-supply = <&vbus_phy0>;
+};
+
+&usb1_phy {
+    vcc-supply = <&ldo4_reg>;
+    vbus-supply = <&vbus_phy1>;
+};
+
+/* ============ Thermal (bandgap) + PMIC ldo3 + RTC power-off ============ */
+
+&scm_conf {
+    bandgap: bandgap@448 {
+	compatible = "ti,am335x-bandgap";
+	reg = <0x448 0x8>;
+    };
+};
+
+&ldo3_reg {
+    regulator-name = "vdd_1v8";
+    regulator-min-microvolt = <1800000>;
+    regulator-max-microvolt = <1800000>;
+    regulator-always-on;
+};
+
+&rtc {
+    system-power-controller;
+};
+
+/* GFX/SGX (@56000000) — PowerVR, на плате нет; в v8 удалён. resets=prm_gfx виснет */
+&{/ocp/target-module@56000000} {
+    status = "disabled";
+};
+
+/* PRU-ICSS — физически нет в AM3352BZCZ100 */
+&pruss_tm {
+    status = "disabled";
+};
+
+/* TSCADC — ADC на плате не разведён (в v8 disabled) */
+&tscadc {
+    status = "disabled";
+};
+
+&tps {
+    regulators {
+	compatible = "ti,tps65217-pmic";
+    };
+
+    backlight {
+	compatible = "ti,tps65217-bl";
+	status = "disabled";
+    };
+
+    pwrbutton {
+	status = "okay";
+    };
+};
+
+/* ============ Фиксы по dmesg: poweroff, SD debounce, vqmmc ============ */
+
+/* #7: без этого PMIC не регистрирует pm_power_off → panic при poweroff */
+&tps {
+    ti,pmic-shutdown-controller;
+};
+
+/* #4 debounce -22 + #5 vqmmc dummy: как в v8 */
+&mmc1 {
+    cd-debounce-delay-ms = <0>;
+    vmmc-supply = <&vmmcsd_fixed>;
+    vqmmc-supply = <&vmmcsd_fixed>;
+};
+
+/* rtc: убрать ext-clk (внешнего 32k кристалла на L3+ нет; как в v8) */
+&rtc {
+    /delete-property/ clocks;
+    /delete-property/ clock-names;
+};
+
+&{/ocp/interconnect@48000000/segment@0/target-module@22000} {
+    status = "okay";
+};
+
+&{/ocp/interconnect@48000000/segment@0/target-module@22000/serial@0} {
+    status = "okay";
+    clock-frequency = <48000000>;
+    pinctrl-names = "default";
+    pinctrl-0 = <&uart1_pins>;
+};
+
+&{/ocp/interconnect@48000000/segment@0/target-module@24000} {
+    status = "okay";
+};
+
+&{/ocp/interconnect@48000000/segment@0/target-module@24000/serial@0} {
+    status = "okay";
+    clock-frequency = <48000000>;
+    pinctrl-names = "default";
+    pinctrl-0 = <&uart2_pins>;
+};
+
+/ {
+    pps_timer: pps-timer {
+	compatible = "pps-dmtimer";
+	timer = <&timer7>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&timer7_pins>;
+	status = "okay";
+    };
+};

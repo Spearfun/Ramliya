@@ -1,0 +1,15 @@
+# Ramliya boot configuration for U-Boot (SD card boot)
+#
+# Copy to SD card FAT partition alongside zImage and DTB.
+# Addresses must match board RAM map (AM335x 256MB DDR3).
+
+console=ttyS0,115200n8
+optargs=ubi.mtd=9 ubi.fm_autoconvert=1
+loadaddr=0x82000000
+rdaddr=0x88080000
+fdtaddr=0x88000000
+loadzimage=load mmc 0:1 ${loadaddr} zImage
+loadfdt=load mmc 0:1 ${fdtaddr} am335x-l3plus.dtb
+loadrd=load mmc 0:1 ${rdaddr} initramfs.bin.SD; setenv rdsize ${filesize}
+setargs=setenv bootargs console=${console} ${optargs}
+uenvcmd=run loadzimage loadfdt loadrd setargs; bootz ${loadaddr} ${rdaddr}:${rdsize} ${fdtaddr}
