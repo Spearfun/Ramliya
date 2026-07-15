@@ -262,7 +262,7 @@ The following resources were instrumental during specific stages of the bring-up
 - **[OctavoSystems AM335x Design Tutorial](https://octavosystems.com/app_notes/osd335x-design-tutorial/bare-minimum-boot/peripheral-circuitry/)** - bare minimum boot peripheral circuitry reference for AM335x custom boards
 - **[TI E2E: AM3358 custom board USB boot-up issue](https://e2e.ti.com/support/processors-group/processors/f/processors-forum/771294/linux-am3358-custom-board-without-usb-boot-up-issue)** - community-sourced debugging of boot failures on boards with unpopulated USB circuitry
 - **[cryptodashie/bitmain_hacking](https://github.com/cryptodashie/bitmain_hacking)** - Bitmain board reverse engineering and alternative firmware exploration
-- **[Derek Molloy / beaglebone](https://github.com/derekmolloy/beaglebone)** - the canonical BeagleBone Black reference repository; a starting point for anyone working with this platform
+- **[Derek Molloy / beaglebone](https://github.com/derekmolloy)** - the canonical BeagleBone Black reference repository; a starting point for anyone working with this platform
 - **[modbus.pl: Cross-compile kernel for BeagleBone Black](https://modbus.pl/2023/03/12/cross-compile-kernel-for-beaglebone-black/)** - practical cross-compilation walkthrough
 
 ### Additional Resources
