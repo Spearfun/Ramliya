@@ -128,7 +128,7 @@
     };
 };
 
-/* ============ Отключение отсутствующего железа ============ */
+/* ============ Not populated HW  ============ */
 &usb0 { status = "disabled"; };
 
 &baseboard_eeprom { status = "disabled"; };
@@ -137,7 +137,7 @@
 &cape_eeprom2 { status = "disabled"; };
 &cape_eeprom3 { status = "disabled"; };
 
-/* ============ User LEDs (4 синих) ============ */
+/* ============ User LEDs (4 blue leds onboad) ============ */
 &{/leds/led2} {
     label = "l3plus:blue:usr0";
     linux,default-trigger = "default-on";
@@ -160,15 +160,15 @@
     linux,default-trigger = "pps-dmtimer";
 };
 
-/* ============ Audio: McASP I2S → внешний DAC (spdif-dit заглушка) ============ */
+/* ============ Audio: McASP I2S → ext DAC (spdif-dit blob) ============ */
 
 &mcasp0 {
     status = "okay";
     pinctrl-names = "default";
     pinctrl-0 = <&mcasp0_pins>;
-    op-mode = <0>;			/* MCASP_IIS_MODE */
+    op-mode = <0>;
     tdm-slots = <2>;
-    serial-dir = <0 0 1 0>;		/* 4 сериализатора: 3-й = TX */
+    serial-dir = <0 0 1 0>;
     #sound-dai-cells = <0>;
 };
 
@@ -259,17 +259,17 @@
     system-power-controller;
 };
 
-/* GFX/SGX (@56000000) — PowerVR, на плате нет; в v8 удалён. resets=prm_gfx виснет */
+/* GFX/SGX (@56000000) — PowerVR. resets=prm_gfx hokd boot */
 &{/ocp/target-module@56000000} {
     status = "disabled";
 };
 
-/* PRU-ICSS — физически нет в AM3352BZCZ100 */
+/* PRU-ICSS —> AM3352BZCZ100 */
 &pruss_tm {
     status = "disabled";
 };
 
-/* TSCADC — ADC на плате не разведён (в v8 disabled) */
+/* TSCADC — ADC */
 &tscadc {
     status = "disabled";
 };
@@ -289,21 +289,21 @@
     };
 };
 
-/* ============ Фиксы по dmesg: poweroff, SD debounce, vqmmc ============ */
+/* ============ dmesg fixes: poweroff, SD debounce, vqmmc ============ */
 
-/* #7: без этого PMIC не регистрирует pm_power_off → panic при poweroff */
+/* PMIC -> register pm_power_off → poweroff panic */
 &tps {
     ti,pmic-shutdown-controller;
 };
 
-/* #4 debounce -22 + #5 vqmmc dummy: как в v8 */
+/* #4 debounce -22 + #5 vqmmc dummy: */
 &mmc1 {
     cd-debounce-delay-ms = <0>;
     vmmc-supply = <&vmmcsd_fixed>;
     vqmmc-supply = <&vmmcsd_fixed>;
 };
 
-/* rtc: убрать ext-clk (внешнего 32k кристалла на L3+ нет; как в v8) */
+/* rtc: ext-clk remove */
 &rtc {
     /delete-property/ clocks;
     /delete-property/ clock-names;
