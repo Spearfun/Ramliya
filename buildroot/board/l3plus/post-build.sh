@@ -9,7 +9,7 @@ rm -rf "$TARGET_DIR/usr/share/applications"
 rm -rf "$TARGET_DIR/usr/share/icons"
 rm -rf "$TARGET_DIR/usr/share/pixmaps"
 
-# SNMP MIBs — не используем net-snmp
+# Remove unneeded SNMP MIBs
 rm -rf "$TARGET_DIR/usr/share/snmp"
 
 # Documentation
