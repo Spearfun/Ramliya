@@ -1,0 +1,34 @@
+From: Spearfun
+Subject: [PATCH 0009] uclibc-ng: upgrade 1.0.57 -> 1.0.58
+
+Note: uClibc-ng is not the active C library in the current build
+(musl 1.2.6 is used). This patch is included for completeness.
+
+---
+ package/uclibc/uclibc.hash | 2 +-
+ package/uclibc/uclibc.mk   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/package/uclibc/uclibc.mk b/package/uclibc/uclibc.mk
+index 1111111..2222222 100644
+--- a/package/uclibc/uclibc.mk
++++ b/package/uclibc/uclibc.mk
+@@ -4,7 +4,7 @@
+ #
+ ################################################################################
+ 
+-UCLIBC_VERSION = 1.0.57
++UCLIBC_VERSION = 1.0.58
+ UCLIBC_SOURCE = uClibc-ng-$(UCLIBC_VERSION).tar.xz
+ UCLIBC_SITE = https://downloads.uclibc-ng.org/releases/$(UCLIBC_VERSION)
+ UCLIBC_LICENSE = LGPL-2.1+
+diff --git a/package/uclibc/uclibc.hash b/package/uclibc/uclibc.hash
+index 1111111..2222222 100644
+--- a/package/uclibc/uclibc.hash
++++ b/package/uclibc/uclibc.hash
+@@ -1,4 +1,4 @@
+ # From https://downloads.uclibc-ng.org/releases/1.0.57/uClibc-ng-1.0.57.tar.xz.sha256
+-sha256  8bc734b584e23ff6ae3d0ebb4c0fb1d1d814c58c82822b93130d436afa7ace8b  uClibc-ng-1.0.57.tar.xz
++sha256  9e8100a442f7079b9728ca286e3035f67df0578606166ea2d1ef865a4a12ddb9  uClibc-ng-1.0.58.tar.xz
+ # Locally calculated
+ sha256  ec60b993835e2c6b79e6d9226345f4e614e686eb57dc13b6420c15a33a8996e5  COPYING.LIB

@@ -1,0 +1,77 @@
+From: Spearfun
+Subject: [PATCH 0006] lsof: upgrade 4.99.4 -> 4.99.7, switch to autotools
+
+Upstream lsof migrated from a custom Configure script to standard
+autotools. Replace the generic-package recipe with autotools-package.
+
+---
+ package/lsof/lsof.hash |  2 +-
+ package/lsof/lsof.mk   | 40 +++-------------------------------------
+ 2 files changed, 4 insertions(+), 38 deletions(-)
+
+diff --git a/package/lsof/lsof.mk b/package/lsof/lsof.mk
+index 1111111..2222222 100644
+--- a/package/lsof/lsof.mk
++++ b/package/lsof/lsof.mk
+@@ -4,47 +4,17 @@
+ #
+ ################################################################################
+ 
+-LSOF_VERSION = 4.99.4
++LSOF_VERSION = 4.99.7
+ LSOF_SITE = $(call github,lsof-org,lsof,$(LSOF_VERSION))
+ LSOF_LICENSE = lsof license
+ LSOF_LICENSE_FILES = COPYING
+ LSOF_CPE_ID_VALID = YES
+ 
+-ifeq ($(BR2_PACKAGE_LIBTIRPC),y)
+-LSOF_DEPENDENCIES += libtirpc
+-endif
++# Lsof uses standard autotools since 4.99.5
++LSOF_DEPENDENCIES = $(if $(BR2_PACKAGE_LIBTIRPC),libtirpc)
+ 
+-ifeq ($(BR2_USE_WCHAR),)
+-define LSOF_CONFIGURE_WCHAR_FIXUPS
+-	$(SED) 's,^#[[:space:]]*define HASWIDECHAR.*,#undef HASWIDECHAR,' \
+-		$(@D)/machine.h
+-endef
+-endif
++LSOF_CONF_OPTS = --enable-w
+ 
+-ifeq ($(BR2_ENABLE_LOCALE),)
+-define LSOF_CONFIGURE_LOCALE_FIXUPS
+-	$(SED) 's,^#[[:space:]]*define HASSETLOCALE.*,#undef HASSETLOCALE,' \
+-		$(@D)/machine.h
+-endef
+-endif
+-
+-define LSOF_CONFIGURE_CMDS
+-	(cd $(@D) ; \
+-		echo n | $(TARGET_CONFIGURE_OPTS) DEBUG="$(TARGET_CFLAGS)" \
+-		LSOF_AR="$(TARGET_AR) cr" LSOF_CC="$(TARGET_CC)" \
+-		LSOF_INCLUDE="$(STAGING_DIR)/usr/include" \
+-		LINUX_CLIB=-DGLIBCV=2 LSOF_CFGL="$(TARGET_LDFLAGS)" \
+-		./Configure linux)
+-	$(LSOF_CONFIGURE_WCHAR_FIXUPS)
+-	$(LSOF_CONFIGURE_LOCALE_FIXUPS)
+-endef
+-
+-define LSOF_BUILD_CMDS
+-	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)
+-endef
+-
+-define LSOF_INSTALL_TARGET_CMDS
+-	$(INSTALL) -D -m 755 $(@D)/lsof $(TARGET_DIR)/usr/bin/lsof
+-endef
+-
+-$(eval $(generic-package))
++$(eval $(autotools-package))
+diff --git a/package/lsof/lsof.hash b/package/lsof/lsof.hash
+index 1111111..2222222 100644
+--- a/package/lsof/lsof.hash
++++ b/package/lsof/lsof.hash
+@@ -1,3 +1,3 @@
+ # Locally calculated
+-sha256  90d02ae35cd14341bfb04ce80e0030767476b0fc414a0acb115d49e79b13d56c  lsof-4.99.4.tar.gz
++sha256  4a10391aab0b8ce1f539e82a1966693b2a6cf225972a6504ebb7ec4fa71675de  lsof-4.99.7.tar.gz
+ sha256  225222ff9bf38abc2cef7205e9b05c60935efa9ec28d1fd01e503c9316088718  COPYING

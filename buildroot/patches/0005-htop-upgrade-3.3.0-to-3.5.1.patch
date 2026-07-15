@@ -1,0 +1,32 @@
+From: Spearfun
+Subject: [PATCH 0005] htop: upgrade 3.3.0 -> 3.5.1
+
+---
+ package/htop/htop.hash | 2 +-
+ package/htop/htop.mk   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/package/htop/htop.mk b/package/htop/htop.mk
+index 1111111..2222222 100644
+--- a/package/htop/htop.mk
++++ b/package/htop/htop.mk
+@@ -4,7 +4,7 @@
+ #
+ ################################################################################
+ 
+-HTOP_VERSION = 3.3.0
++HTOP_VERSION = 3.5.1
+ HTOP_SOURCE = htop-$(HTOP_VERSION).tar.xz
+ HTOP_SITE = https://github.com/htop-dev/htop/releases/download/$(HTOP_VERSION)
+ HTOP_DEPENDENCIES = ncurses
+diff --git a/package/htop/htop.hash b/package/htop/htop.hash
+index 1111111..2222222 100644
+--- a/package/htop/htop.hash
++++ b/package/htop/htop.hash
+@@ -1,5 +1,5 @@
+ # From https://github.com/htop-dev/htop/releases/download/3.3.0/htop-3.3.0.tar.xz.sha256
+-sha256  a69acf9b42ff592c4861010fce7d8006805f0d6ef0e8ee647a6ee6e59b743d5c  htop-3.3.0.tar.xz
++sha256  526cecd62870aa8d14d2a79a35ea197e4e2b5317d275b567cee0574b2ddb2e9a  htop-3.5.1.tar.xz
+ 
+ # Locally calculated
+ sha256  8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643  COPYING
