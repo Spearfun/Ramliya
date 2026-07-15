@@ -16,6 +16,9 @@ CONFIG_FEATURE_LOGREAD_REDUCED_LOCKING=y
 CONFIG_HTTPD=y
 CONFIG_FEATURE_HTTPD_CGI=y
 CONFIG_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR=y
+# required: index.html restore after truncation lives under BASIC_AUTH ifdef
+CONFIG_FEATURE_HTTPD_BASIC_AUTH=y
+
 # Monolithic kernel: no module utilities
 # CONFIG_INSMOD is not set
 # CONFIG_RMMOD is not set
