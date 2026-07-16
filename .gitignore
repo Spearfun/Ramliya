@@ -1,0 +1,33 @@
+# Build artefacts
+*.o
+*.a
+*.so
+*.so.*
+*.deb
+build/
+*.pyc
+__pycache__/
+.venv/
+
+# Tarballs & downloads (source of truth is upstream)
+downloads/
+*.tar.gz
+*.tar.xz
+*.tar.bz2
+*.tar.zst
+
+# Editor state
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local secrets (should never be here anyway)
+*.pem
+*.key
+id_rsa*
+
+# checkinstall artefacts
+description-pak
+*-pak
