@@ -18,7 +18,6 @@ CONFIG_FEATURE_HTTPD_CGI=y
 CONFIG_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR=y
 # required: index.html restore after truncation lives under BASIC_AUTH ifdef
 CONFIG_FEATURE_HTTPD_BASIC_AUTH=y
-
 # Monolithic kernel: no module utilities
 # CONFIG_INSMOD is not set
 # CONFIG_RMMOD is not set
@@ -27,3 +26,50 @@ CONFIG_FEATURE_HTTPD_BASIC_AUTH=y
 # CONFIG_DEPMOD is not set
 # CONFIG_MODINFO is not set
 # CONFIG_MODPROBE_SMALL is not set
+
+# Ramliya cleanup: unused applets (headless UART appliance, no VT/floppy/tape/swap/cron)
+# CONFIG_LSPCI is not set
+# CONFIG_LSSCSI is not set
+# CONFIG_EJECT is not set
+# CONFIG_UUDECODE is not set
+# CONFIG_UUENCODE is not set
+# CONFIG_UUIDGEN is not set
+# CONFIG_UNIX2DOS is not set
+# CONFIG_DOS2UNIX is not set
+# CONFIG_BASE32 is not set
+# CONFIG_ASCII is not set
+# CONFIG_SHA3SUM is not set
+# CONFIG_FACTOR is not set
+# CONFIG_TSORT is not set
+# CONFIG_TS is not set
+# CONFIG_CHVT is not set
+# CONFIG_DEALLOCVT is not set
+# CONFIG_OPENVT is not set
+# CONFIG_SETKEYCODES is not set
+# CONFIG_MESG is not set
+# CONFIG_DUMPKMAP is not set
+# CONFIG_LOADKMAP is not set
+# CONFIG_MT is not set
+# CONFIG_FDFLUSH is not set
+# CONFIG_FREERAMDISK is not set
+# CONFIG_HDPARM is not set
+# CONFIG_VCONFIG is not set
+# CONFIG_NAMEIF is not set
+# CONFIG_SETARCH is not set
+# CONFIG_LINUX32 is not set
+# CONFIG_LINUX64 is not set
+# CONFIG_SWAPON is not set
+# CONFIG_SWAPOFF is not set
+# CONFIG_MKSWAP is not set
+# CONFIG_DNSD is not set
+# CONFIG_RDATE is not set
+# CONFIG_ETHER_WAKE is not set
+# CONFIG_FBSET is not set
+# CONFIG_LOADFONT is not set
+# CONFIG_SETLOGCONS is not set
+# CONFIG_FDFORMAT is not set
+# CONFIG_READPROFILE is not set
+# CONFIG_FSFREEZE is not set
+# CONFIG_PARTPROBE is not set
+# CONFIG_INETD is not set
+# CONFIG_TELNET is not set
