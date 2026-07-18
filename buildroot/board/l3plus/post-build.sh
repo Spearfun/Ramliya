@@ -51,4 +51,15 @@ rm -f "$TARGET_DIR/usr/sbin/i2c-stub-from-dump" "$TARGET_DIR/usr/sbin/phc.sh"
 # vlock if left behind by screen/kbd removal
 rm -f "$TARGET_DIR/usr/bin/vlock"
 
+
+# empty/unused dirs
+rmdir "$TARGET_DIR/media" "$TARGET_DIR/srv" "$TARGET_DIR/opt" \
+      "$TARGET_DIR/var/log/chrony" "$TARGET_DIR/etc/sysctl.d" 2>/dev/null || true
+
+rm -rf "$TARGET_DIR/srv"
+
+rm -f "$TARGET_DIR/etc/inetd.conf" 
+
+# "$TARGET_DIR/etc/default/dropbear"
+
 echo "post-build.sh: Ramliya trim & cleanup complete"

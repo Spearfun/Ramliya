@@ -1,0 +1,25 @@
+gpsd: skip IPv6 listener on IPv6-less kernel
+
+Ramliya runs a monolithic kernel without CONFIG_IPV6. passivesocks() calls
+socket(AF_INET6,...) which fails and logs "can't create IPv6 socket" every
+start; the IPv4 listener on 127.0.0.1:2947 works regardless.
+
+--- a/gpsd/gpsd.c
++++ b/gpsd/gpsd.c
+@@ -527,10 +527,12 @@
+         socks[0] = passivesock_af(AF_INET, service, tcp_or_udp, qlen);
+     }
+ 
+-    if (AF_UNSPEC == af_allowed ||
+-        AF_INET6 == af_allowed) {
+-        socks[1] = passivesock_af(AF_INET6, service, tcp_or_udp, qlen);
+-    }
++    // Ramliya: kernel built without IPv6; skip IPv6 listener (avoids bogus
++    // "can't create IPv6 socket" ERROR on every start)
++    // if (AF_UNSPEC == af_allowed ||
++    //     AF_INET6 == af_allowed) {
++    //     socks[1] = passivesock_af(AF_INET6, service, tcp_or_udp, qlen);
++    // }
+ 
+     for (i = 0; i < AFCOUNT; i++) {
+         if (0 > socks[i]) {
