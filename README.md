@@ -100,8 +100,22 @@ The starting point was extracting `config.gz` and the device tree blob from the 
 
 ### Porting to Linux 5.10
 
-The stock 3.8 kernel can be rebuilt and reconfigured, it boots, but there is no reason to stay on it.<br>
+The first milestone was rebuilding, reconfiguring, and booting the stock 3.8 kernel from source — a known-good reference point, deliberately built as preparation for the port rather than a place to stay.<br>
 Porting to 5.10 LTS meant reworking the device tree substantially, using the decompiled vendor DTB (which carried the correct NAND/GPMC parameters) and the original BeagleBone Black DT as reference points. The 3.8-era DT used legacy bindings (`ti,elm-id = <0x10>` instead of proper phandle `<&elm>`, no `target-module` wrappers, flat GPMC nodes) that do not compile against 5.10's `am33xx.dtsi` base. The port required 11 kernel patches to bridge hardware-specific gaps: NAND ECC probe ordering, RTC clock source selection, bandgap thermal sensor, DMTimer reservation conflicts, CPTS clock name mismatch, and others.
+
+| Kernel Base||
+| :--- | :--- |
+| Repository: | https://github.com/beagleboard/linux.git |
+| Tag:        | v5.10.168-ti-r84 |
+| Commit:     | 9bee99e9e4f5376a7479a3e0b4462e92ed6d7f1c |
+| Patches:    | 11 patches applied in order — see kernel/patches/ (0001–0011) |
+
+| Buildroot Base||
+| :---   | :---  |
+| Repository:   | https://gitlab.com/buildroot.org/buildroot.git |
+| Tag:          | 2025.02.15 |
+| Commit:       | c49ae7216786d3cb62a8e8de5556007b4b539233 |
+| Local changes:| ramliya defconfig; in-tree gpsd IPv6 patch (package/gpsd/); busybox fragment |
 
 Early boot was a cascade of panics. The base `am33xx.dtsi` enables peripherals that don't exist on the L3+: the GFX/SGX block, PRU-ICSS, and TSC/ADC all trigger `omap_reset_deassert` timeouts when their reset domains are accessed on an AM3352 with those blocks unpopulated. Each one had to be found by its register address in `dmesg` and disabled in the DT at the `target-module` wrapper level (disabling only the inner node is not sufficient).
 
@@ -143,7 +157,7 @@ A working Buildroot environment and a UART-TTL serial adapter for early boot con
 | :--- | :--- |
 | Kernel | Linux 5.10.168 LTS, monolithic (0 modules), `PREEMPT`, `HZ=1000`, **built separately** (not through Buildroot) |
 | Kernel toolchain | `arm-none-linux-gnueabihf-gcc 10.3` (Linaro 2021.07) |
-| Build system | Buildroot 2025.02.x (custom defconfig, external tree) - **builds initramfs only**, not the kernel |
+| Build system | Buildroot 2025.02.159 (custom defconfig, external tree) - **builds initramfs only**, not the kernel |
 | Buildroot toolchain | Internal GCC 13.4.0, musl 1.2.6, hardfloat |
 | Init | Finit 4.17 (service supervision, built-in watchdog, RTC/TTY/urandom plugins) |
 | Root filesystem | UBIFS on NAND with persistent overlay; initramfs (cpio+gzip) for boot |

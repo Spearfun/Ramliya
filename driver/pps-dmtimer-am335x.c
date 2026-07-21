@@ -23,11 +23,15 @@
  * Copyright (C) 2026 Spearfun
  *
  * Credits & Inspiration:
- *   Based on the original pps-gmtimer driver concept for Linux 3.8 
- *   by Dennis Drown (https://github.com/ddrown/pps-gmtimer).
+ *   The original concept of using the AM335x DMTimer capture unit for
+ *   Linux PPS support originates from the pps-gmtimer driver for
+ *   Linux 3.8 by Dennis Drown:
+ *   https://github.com/ddrown/pps-gmtimer
  *
- *   Completely redesigned, rewritten, and ported to modern Linux 5.10+ 
- *   kernels and the updated OMAP dmtimer / Device Tree framework by Spearfun.
+ *   This driver is an independent implementation for modern
+ *   Linux 5.10+ kernels. It was completely redesigned and rewritten
+ *   around the current OMAP DMTimer framework, the modern Device Tree
+ *   model, and the current Linux PPS subsystem.
  * ----------------------------------------------------------------------
  */
 
